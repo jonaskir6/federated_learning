@@ -20,6 +20,6 @@ strategy = SaveModelStrategy()
 fl.server.start_server(
     server_address = 'localhost:' + str(sys.argv[1]),
     config = fl.server.ServerConfig(num_rounds=3),
-    grpc_max_message_length = 4 * 1024 * 1024,
-    strategy = strategy
+    strategy = strategy,
+    grpc_max_message_length=2 * 1024 * 1024 *1024 -1
 )

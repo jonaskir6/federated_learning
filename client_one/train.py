@@ -71,7 +71,7 @@ def save_samples(samples, filename='samples.png'):
     plt.savefig(filename)
     plt.show()
 
-def train_model(model, training_data, test_data):
+def train_model(model, training_data, epochs):
     # Select device
     if torch.cuda.is_available():
         device = torch.device('cuda:0')
@@ -95,7 +95,7 @@ def train_model(model, training_data, test_data):
     overall_start_time = time.time()
 
     # training loop
-    for epoch in range(7):
+    for epoch in range(epochs):
 
         print("Starting epoch")
 
@@ -133,10 +133,10 @@ def train_model(model, training_data, test_data):
         epoch_end_time = time.time()
         # print('-----------------------------------------')
         # print(f'Epoch: {epoch + 1:3d} took {epoch_end_time - epoch_start_time:.2f}s')
-        test_loss = evaluate(model=model, test_data_loader=test_data, device=device)
-        test_loss_curve.append(test_loss)
-        test_loss_epochs.append(epoch + 1)
-        print(f'Epoch: {epoch + 1:3d}, Test Loss: {test_loss:.4f}')
+        # test_loss = evaluate(model=model, test_data_loader=test_data, device=device)
+        # test_loss_curve.append(test_loss)
+        # test_loss_epochs.append(epoch + 1)
+        # print(f'Epoch: {epoch + 1:3d}, Test Loss: {test_loss:.4f}')
         # print('-----------------------------------------')
     
 

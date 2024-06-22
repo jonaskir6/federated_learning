@@ -1,3 +1,4 @@
+from typing import OrderedDict
 import flwr as fl
 from torchvision import datasets, transforms
 import numpy as np
@@ -64,20 +65,28 @@ test_dl = DataLoader(test_data, batch_size=64, shuffle=False)
 
 
 class FlowerClient(fl.client.NumPyClient):
-    def get_parameters(self):
-        return model.state_dict()
+    def get_parameters(self, config):
+        return [val.cpu().numpy() for _, val in model.state_dict().items()]
+    
+    def set_parameters(self, parameters):
+        params_dict = zip(model.state_dict().keys(), parameters)
+        state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
+        model.load_state_dict(state_dict, strict=True)
 
     # returns weights of MNIST netowrk after training
-    def fit(self):
-        train.train_model(model, train_dl, test_dl)
-        return model.state_dict(), len(train_x), {}
+    def fit(self, parameters, config):
+        self.set_parameters(parameters)
+        train.train_model(model, train_dl, 1)
+        return self.get_parameters(config={}), len(train_x), {}
     
-    def evaluate(self):
-        return train.evaluate(test_dl, model)
+    def evaluate(self, parameters, config):
+        self.set_parameters(parameters)
+        loss = train.evaluate(test_dl, model)
+        return float(loss), 10, {"accuracy:": 0.0}
 
 # Start Flower client
-fl.client.start_numpy_client(
+fl.client.start_client(
         server_address="localhost:"+str(sys.argv[1]), 
-        client=FlowerClient(), 
-        grpc_max_message_length = 4 * 1024 * 1024 *1024
+        client=FlowerClient().to_client(),
+        grpc_max_message_length=2 * 1024 * 1024 *1024 -1
 )
