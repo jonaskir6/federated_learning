@@ -18,7 +18,7 @@ class Binarize():
 def getDist(y):
     ax = sns.countplot(y)
     ax.set(title="Count of data classes")
-    plt.savefig("count.png")
+    plt.savefig("client_two_count.png")
     
 # Get data based on distribution
 def getData(dist, x, y):
@@ -77,7 +77,7 @@ class FlowerClient(fl.client.NumPyClient):
     # returns weights of MNIST netowrk after training
     def fit(self, parameters, config):
         self.set_parameters(parameters)
-        train.train_model(model, train_dl, 1)
+        train.train_model(model, train_dl, 1, 'samples.png')
         return self.get_parameters(config={}), len(train_x), {}
     
     def evaluate(self, parameters, config):

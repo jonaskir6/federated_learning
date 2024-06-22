@@ -44,7 +44,7 @@ def sample(model, num_samples=100, device='cuda'):
 
     return samples.cpu().numpy().reshape(-1, 28, 28) # Reshape to (num_samples, 28, 28)
 
-def save_samples(samples, filename='samples.png'):
+def save_samples(samples, file='samples.png'):
     # Get the number of samples
     num_samples = samples.shape[0]
 
@@ -68,10 +68,10 @@ def save_samples(samples, filename='samples.png'):
         axs[i].axis('off')
 
     plt.tight_layout()
-    plt.savefig(filename)
+    plt.savefig(file)
     plt.show()
 
-def train_model(model, training_data, epochs):
+def train_model(model, training_data, epochs, file):
     # Select device
     if torch.cuda.is_available():
         device = torch.device('cuda:0')
@@ -141,7 +141,7 @@ def train_model(model, training_data, epochs):
     
 
     samples = sample(model, num_samples=100)
-    save_samples(samples)
+    save_samples(samples, file)
 
     # overall_end_time = time.time()
     # print('=========================================')
