@@ -5,19 +5,27 @@ import numpy as np
 import network, train
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-import seaborn as sns
 import matplotlib.pyplot as plt
 import sys
+from collections import Counter
 
 # from MNIST repo
 class Binarize():
     def __call__(self, tensor):
         return (tensor > 0.5).float()
     
-# Print distribution of data classes
 def getDist(y):
-    ax = sns.countplot(y)
-    ax.set(title="Count of data classes")
+    counts = Counter(y)
+    classes = list(counts.keys())
+    class_counts = list(counts.values())
+    
+    plt.figure(figsize=(10, 6))
+    plt.bar(classes, class_counts, color='skyblue') 
+    
+    plt.title("Count of data classes")
+    plt.xlabel("Classes")
+    plt.ylabel("Count")
+
     plt.savefig("client_one_count.png")
     
 # Get data based on distribution
@@ -84,7 +92,6 @@ class FlowerClient(fl.client.NumPyClient):
         loss = train.evaluate(test_dl, model)
         return float(loss), 10, {"accuracy:": 0.0}
 
-# Start Flower client
 fl.client.start_client(
         server_address="localhost:"+str(sys.argv[1]), 
         client=FlowerClient().to_client(),

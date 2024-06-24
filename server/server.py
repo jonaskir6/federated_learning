@@ -30,7 +30,7 @@ class SaveModelStrategy(fl.server.strategy.FedAvg):
             train.save_samples(samples, f"model_samples/model_{rnd}_samples.png")
 
             # Save the model
-            torch.save(model.state_dict(), f"model_round_{rnd}.pth")    
+            torch.save(model.state_dict(), f"models/model_round_{rnd}.pth")    
 
         return aggregated_parameters, aggregated_metrics
     

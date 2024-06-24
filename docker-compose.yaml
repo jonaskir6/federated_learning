@@ -1,0 +1,38 @@
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./server:/app
+    networks:
+      - flwr_net
+
+  # CLIENTS
+  client_one:
+    build:
+      context: ./client_one
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./client_one:/app
+    networks:
+      - flwr_net
+    depends_on:
+      - server
+
+  client_two:
+    build:
+      context: ./client_two
+      dockerfile: Dockerfile
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./client_two:/app
+    networks:
+      - flwr_net
+    depends_on:
+      - server

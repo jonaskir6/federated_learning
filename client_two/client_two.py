@@ -5,9 +5,9 @@ import numpy as np
 import network, train
 import torch
 from torch.utils.data import DataLoader, TensorDataset
-import seaborn as sns
 import matplotlib.pyplot as plt
 import sys
+from collections import Counter
 
 # from MNIST repo
 class Binarize():
@@ -16,10 +16,19 @@ class Binarize():
     
 # Print distribution of data classes
 def getDist(y):
-    ax = sns.countplot(y)
-    ax.set(title="Count of data classes")
-    plt.savefig("client_two_count.png")
+    counts = Counter(y)
+    classes = list(counts.keys())
+    class_counts = list(counts.values())
     
+    plt.figure(figsize=(10, 6))
+    plt.bar(classes, class_counts, color='skyblue') 
+    
+    plt.title("Count of data classes")
+    plt.xlabel("Classes")
+    plt.ylabel("Count")
+
+    plt.savefig("client_one_count.png")
+
 # Get data based on distribution
 def getData(dist, x, y):
     dx = []
