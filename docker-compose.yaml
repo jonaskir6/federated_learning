@@ -7,8 +7,6 @@ services:
       - "5002:5002"
     volumes:
       - ./server:/app
-    networks:
-      - flwr_net
 
   # CLIENTS
   client_one:
@@ -19,8 +17,6 @@ services:
       - "5002:5002"
     volumes:
       - ./client_one:/app
-    networks:
-      - flwr_net
     depends_on:
       - server
 
@@ -32,7 +28,5 @@ services:
       - "5002:5002"
     volumes:
       - ./client_two:/app
-    networks:
-      - flwr_net
     depends_on:
       - server

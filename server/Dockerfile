@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.0-runtime
+FROM nvidia/cuda:12.5.0-runtime-ubuntu20.04
 
 RUN apt-get update && apt-get install -y python3 python3-pip
 
