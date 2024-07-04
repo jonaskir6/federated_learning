@@ -1,5 +1,5 @@
 # FedAvg with MADE
-Federated Learning Tests with Pytorch &amp; Flower on MNIST Dataset with Masked Autoencoder for Distribution Estimation Model 
+Federated Learning Tests with Pytorch &amp; Flower on MNIST Dataset with Masked Autoencoder for Distribution Estimation Model from the paper: https://arxiv.org/abs/1502.03509
 
 ## Usage
 - (Conda) Environment needs: torch, numpy, flwr, torchvision, sys, matplotlib
