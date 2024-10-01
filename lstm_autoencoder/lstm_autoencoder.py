@@ -8,25 +8,31 @@ import torch.optim as optim
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
 
-# Load and preprocess data
-dataframe = pd.read_csv('data/fl_data.csv')
-df = dataframe[['counter', 'weg1', 'dms1']]
-df['Time'] = pd.to_datetime(df['counter'])
 
-sns.lineplot(x=df['Time'], y=df['dms1'])
+dataframe = pd.read_csv('data/fl_data.csv', delimiter=';')
+df = dataframe[['counter', 'dms1']]
 
-print("Start: ", df['Time'].min())
-print("End: ", df['Time'].max())
+df = df.groupby(df.index // 10).agg({
+    'counter': 'first',
+    'dms1': 'mean',
+}).reset_index(drop=True)
 
-train, test = df.loc[df['Time'] <= '100000'], df.loc[df['Time'] > '100000']
+sns.lineplot(x=df['counter'], y=df['dms1'])
+
+print("Start: ", df['counter'].min())
+print("End: ", df['counter'].max())
+
+train, test = df.loc[df['counter'] <= 140000], df.loc[df['counter'] > 140000]
+
+print(train.shape)
 
 scaler = StandardScaler()
 scaler = scaler.fit(train[['dms1']])
 
-train['dms1'] = scaler.transform(train[['dms1']])
-test['dms1'] = scaler.transform(test[['dms1']])
+train[['dms1']] = scaler.transform(train[['dms1']])
+test[['dms1']] = scaler.transform(test[['dms1']])
 
-seq_size = 100
+seq_size=500
 
 def to_sequences(x, y, seq_size=1):
     x_values = []
@@ -38,9 +44,13 @@ def to_sequences(x, y, seq_size=1):
         
     return np.array(x_values), np.array(y_values)
 
-# Shape??
+# shape: (samples, seq_size, n_features)
 trainX, trainY = to_sequences(train[['dms1']], train['dms1'], seq_size)
+# shape: (samples, n_features)
 testX, testY = to_sequences(test[['dms1']], test['dms1'], seq_size)
+
+# print(trainX.shape)
+# print(trainY.shape)
 
 trainX = torch.tensor(trainX, dtype=torch.float32)
 trainY = torch.tensor(trainY, dtype=torch.float32)
@@ -50,7 +60,7 @@ testY = torch.tensor(testY, dtype=torch.float32)
 train_dataset = TensorDataset(trainX, trainY)
 test_dataset = TensorDataset(testX, testY)
 
-train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=False)
 test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -78,12 +88,12 @@ class Encoder(nn.Module):
         )
 
     def forward(self, x):
-        x = x.reshape(1, self.seq_len, self.n_features)
+        #print('enc:', x.shape)
 
         x, (hidden_n, cell_n) = self.lstm1(x)
         x, (hidden_n, cell_n) = self.lstm2(x)
 
-        return x, hidden_n
+        return x
 
 class Decoder(nn.Module):
     def __init__(self, seq_len, input_dim=64, output_dim=1):
@@ -108,12 +118,11 @@ class Decoder(nn.Module):
         self.dense_layers = nn.Linear(self.hidden_dim, output_dim)
 
     def forward(self, x):
-        x = x.repeat(self.seq_len, 1)
-        x = x.reshape(1, self.seq_len, self.input_dim)
-
+        #print('dec1:', x.shape)
         x, (hidden_n, cell_n) = self.lstm1(x)
         x, (hidden_n, cell_n) = self.lstm2(x)
-        x = x.reshape((self.seq_len, self.hidden_dim))
+        x = x[:,-1,:]
+        #print('dec2:', x.shape)
 
         return self.dense_layers(x)
     
@@ -130,53 +139,80 @@ class LSTMAutoencoder(nn.Module):
     def forward(self, x):
         x = self.encoder(x)
         x = self.decoder(x)
+        #print('LSTMAE: ', x.shape)
 
         return x
 
-model = LSTMAutoencoder(seq_len=trainX.shape[1], n_features=trainX.shape[2])
+model = LSTMAutoencoder(seq_len=trainX.shape[1], n_features=trainX.shape[2]).to(device)
 criterion = nn.MSELoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-def train (model, train_ds, test_ds, n_epochs = 10):
+def train(model, train_dl, n_epochs=10):
+    epoch_losses = []
     for epoch in range(n_epochs):
         model.train()
-        train_loss = []
-        for batch_X, batch_Y in train_loader:
+        train_loss = 0.0
+        for batch_X, batch_Y in train_dl:
+            batch_X = batch_X.to(device)
+            batch_Y = batch_Y.to(device)
+
             optimizer.zero_grad()
             output = model(batch_X)
-            loss = criterion(output, batch_X)
+            loss = criterion(output, batch_Y)
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
-        train_loss /= len(train_loader)
+        train_loss /= len(train_dl) 
+        epoch_losses.append(train_loss) 
         print(f'Epoch {epoch+1}, Loss: {train_loss}')
 
-    # Plot training loss
-    plt.plot(range(n_epochs), train_loss, label='Training loss')
+    # training loss
+    epochs = range(1, n_epochs + 1)
+    plt.figure(figsize=(10, 5))
+    plt.plot(epochs, epoch_losses, marker='o', label='Training loss')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.title('Training Loss per Epoch')
+    plt.xticks(epochs)
     plt.legend()
+    plt.grid(True)
+    plt.show()
 
-# Anomaly detection
-model.eval()
-with torch.no_grad():
-    trainPredict = model(trainX).numpy()
-    trainMAE = np.mean(np.abs(trainPredict - trainX.numpy()), axis=1)
-    plt.hist(trainMAE, bins=30)
-    max_trainMAE = 0.3
 
-    testPredict = model(testX).numpy()
-    testMAE = np.mean(np.abs(testPredict - testX.numpy()), axis=1)
-    plt.hist(testMAE, bins=30)
+train(model, train_loader)
 
-anomaly_df = pd.DataFrame(test[seq_size:])
-anomaly_df['testMAE'] = testMAE
-anomaly_df['max_trainMAE'] = max_trainMAE
-anomaly_df['anomaly'] = anomaly_df['testMAE'] > anomaly_df['max_trainMAE']
-anomaly_df['dms1'] = test[seq_size:]['dms1']
 
-sns.lineplot(x=anomaly_df['Time'], y=anomaly_df['testMAE'])
-sns.lineplot(x=anomaly_df['Time'], y=anomaly_df['max_trainMAE'])
+# save table with anomalies in csv? or show as plot?
+def detect_anomalies_without_threshold(model, test_dl):
+    model.eval()
+    anomalies = []
+    scores = []
+    reconstruction_errors = []
 
-anomalies = anomaly_df.loc[anomaly_df['anomaly'] == True]
+    with torch.no_grad():
+        for batch_X, batch_Y in test_dl:
+            batch_X = batch_X.to(device)
+            batch_Y = batch_Y.to(device)
 
-sns.lineplot(x=anomaly_df['Time'], y=scaler.inverse_transform(anomaly_df['dms1'].values.reshape(-1, 1)).flatten())
-sns.scatterplot(x=anomalies['Time'], y=scaler.inverse_transform(anomalies['dms1'].values.reshape(-1, 1)).flatten(), color='r')
+            output = model(batch_X)
+            loss = criterion(output, batch_Y)
+            reconstruction_error = loss.item()
+            reconstruction_errors.append(reconstruction_error)
+
+            anomalies.append((batch_X.cpu().numpy(), output.cpu().numpy(), reconstruction_error))
+
+    # normalize based on the max reconstruction error (0-100)
+    max_error = max(reconstruction_errors)
+    for error in reconstruction_errors:
+        score = (error / max_error) * 100 
+        scores.append(score)
+
+    # sort by reconstruction error (desc)
+    sorted_anomalies = sorted(zip(anomalies, scores), key=lambda x: x[1], reverse=True)
+    return sorted_anomalies
+
+# example
+sorted_anomalies = detect_anomalies_without_threshold(model, test_loader)
+print(f'Number of anomalies detected: {len(sorted_anomalies)}')
+for i, (anomaly, score) in enumerate(sorted_anomalies):
+    print(f'Anomaly {i+1}: Score = {score}')
