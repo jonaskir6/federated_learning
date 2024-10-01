@@ -3,7 +3,7 @@ import flwr as fl
 import sys
 import numpy as np
 import torch
-import lstm_ae, train
+import lstm_ae
 
 # need seq_len and n_features
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -40,7 +40,7 @@ strategy = SaveModelStrategy()
 
 fl.server.start_server(
     server_address = 'localhost:' + str(sys.argv[1]),
-    config = fl.server.ServerConfig(num_rounds=10),
+    config = fl.server.ServerConfig(num_rounds=3),
     strategy = strategy,
     grpc_max_message_length=2 * 1024 * 1024 *1024 -1
 )

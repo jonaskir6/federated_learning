@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import lstm_ae
 
 
-def train(device, model, train_dl, n_epochs=10):
+def train(device, model, train_dl, n_epochs=3):
 
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
@@ -47,7 +47,7 @@ def train(device, model, train_dl, n_epochs=10):
 
 
 # save table with anomalies in csv? or show as plot?
-def detect_anomalies_without_threshold(model, test_dl, device, return_num_anomalies=False):
+def detect_anomalies(model, test_dl, device, return_num_anomalies=False):
     model.eval()
     criterion = nn.MSELoss()
     anomalies = []

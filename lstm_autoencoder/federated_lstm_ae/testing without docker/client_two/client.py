@@ -7,7 +7,7 @@ from torch.utils.data import DataLoader, TensorDataset
 import flwr as fl
 from typing import OrderedDict
 import sys
-import lstm_ae, train
+import lstm_ae, training
 
 # How do I get the data? env variable from docker compose?
 dataframe = pd.read_csv('data/fl_data.csv', delimiter=';')
@@ -79,7 +79,7 @@ model = lstm_ae.LSTMAutoencoder(device, seq_len=trainX.shape[1], n_features=trai
 #########
 
 class FlowerClient(fl.client.NumPyClient):
-    def get_parameters(self):
+    def get_parameters(self, config):
         return [val.cpu().numpy() for _, val in model.state_dict().items()]
     
     def set_parameters(self, parameters):
@@ -87,15 +87,15 @@ class FlowerClient(fl.client.NumPyClient):
         state_dict = OrderedDict({k: torch.tensor(v) for k, v in params_dict})
         model.load_state_dict(state_dict, strict=True)
 
-    def fit(self, parameters):
+    def fit(self, parameters, config):
         self.set_parameters(parameters)
-        train.train(model, train_dl, device)
-        return self.get_parameters(), len(trainX), {}
+        training.train(device, model, train_dl)
+        return self.get_parameters(config={}), len(trainX), {}
     
-    def evaluate(self, parameters):
+    def evaluate(self, parameters, config):
         self.set_parameters(parameters)
-        anomalies = train.detect_anomalies(test_dl, model, device, return_num_anomalies=True)
-        # what is going to be returned? what is the format/score?
+        anomalies = training.detect_anomalies(model, test_dl, device, return_num_anomalies=True)
+        # what is going to be returned? what is the format/score? Right now it tells you loss as anomalies (round one loss = anomalies)
         return float(anomalies), len(testX), {"accuracy:": 0.0}
 
 # start flower client
