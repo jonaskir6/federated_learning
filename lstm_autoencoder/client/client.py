@@ -10,7 +10,7 @@ import sys
 import lstm_ae, training
 
 # How do I get the data? env variable from docker compose?
-dataframe = pd.read_csv('data/fl_data.csv', delimiter=';')
+dataframe = pd.read_csv('fl_data.csv', delimiter=';')
 df = dataframe[['counter', 'dms1']]
 
 df = df.groupby(df.index // 10).agg({
@@ -100,7 +100,7 @@ class FlowerClient(fl.client.NumPyClient):
 
 # start flower client
 fl.client.start_client(
-        server_address="localhost:"+str(sys.argv[1]), 
+        server_address="server:5002", 
         client=FlowerClient().to_client(),
         grpc_max_message_length=2 * 1024 * 1024 *1024 -1
 )

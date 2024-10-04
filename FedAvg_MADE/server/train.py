@@ -15,12 +15,10 @@ def evaluate(test_data_loader, model):
     else:
         device = torch.device('cpu')
 
-  # Disable gradient computation.
     with torch.no_grad():
-        # Switch to evaluation mode.
         model.eval()
         loss=[]
-        # Iterate over the entire test dataset.
+
         for images, labels in test_data_loader:
        
             images = images.to(device)
@@ -32,27 +30,25 @@ def evaluate(test_data_loader, model):
 
 def sample(model, num_samples=100, device='cuda'):
     model.to(device)
-    model.eval()  # Set the model to evaluation mode
-    image_size = 28*28 # MNIST dataset image size
+    model.eval() 
+    image_size = 28*28 
     
-    with torch.no_grad():  # Disable gradient computation
+    with torch.no_grad():  
         samples = torch.zeros((num_samples, image_size), device=device)
         for i in range(image_size):
-            logits = model(samples)  # Get the logits for the current samples
-            probs = logits[:, i]  # Convert logits to probabilities (already done in netwoks.py as a layer)
-            samples[:, i] = torch.bernoulli(probs)  # Sample from the Bernoulli distribution
+            logits = model(samples)  
+            probs = logits[:, i]  #
+            samples[:, i] = torch.bernoulli(probs)  
 
-    return samples.cpu().numpy().reshape(-1, 28, 28) # Reshape to (num_samples, 28, 28)
+    return samples.cpu().numpy().reshape(-1, 28, 28)
 
 def save_samples(samples, file='samples.png'):
-    # Get the number of samples
     num_samples = samples.shape[0]
 
     if(num_samples<=5):
         grid_size_1 = 1
         grid_size_2 = num_samples
     else:
-        # We use the ceiling of the square root of the number of samples to ensure all samples fit
         grid_size_1 = int(np.ceil(np.sqrt(num_samples)))
         grid_size_2 = grid_size_1
     
@@ -63,7 +59,6 @@ def save_samples(samples, file='samples.png'):
         ax.imshow(img, cmap='gray', interpolation='none')
         ax.axis('off')
 
-    # Turn off remaining empty subplots
     for i in range(num_samples, len(axs)):
         axs[i].axis('off')
 
@@ -72,7 +67,6 @@ def save_samples(samples, file='samples.png'):
     plt.show()
 
 def train_model(model, training_data, epochs, file):
-    # Select device
     if torch.cuda.is_available():
         device = torch.device('cuda:0')
     else:
@@ -100,7 +94,6 @@ def train_model(model, training_data, epochs, file):
         print("Starting epoch")
 
         epoch_start_time = time.time()
-        # Switch to training mode.
         model.train()
 
         losses = []

@@ -4,6 +4,7 @@ import sys
 import numpy as np
 import torch
 import lstm_ae
+import os
 
 # need seq_len and n_features
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -23,6 +24,8 @@ class SaveModelStrategy(fl.server.strategy.FedAvg):
         if aggregated_parameters is not None:
             print(f"Saving round {rnd} aggregated_parameters...")
 
+            os.makedirs("models", exist_ok=True)
+
             # convert `parameters` to `List[np.ndarray]`
             aggregated_ndarrays: List[np.ndarray] = fl.common.parameters_to_ndarrays(aggregated_parameters)
 
@@ -39,7 +42,7 @@ class SaveModelStrategy(fl.server.strategy.FedAvg):
 strategy = SaveModelStrategy()
 
 fl.server.start_server(
-    server_address = 'localhost:' + str(sys.argv[1]),
+    server_address = 'server:5002',
     config = fl.server.ServerConfig(num_rounds=3),
     strategy = strategy,
     grpc_max_message_length=2 * 1024 * 1024 *1024 -1
