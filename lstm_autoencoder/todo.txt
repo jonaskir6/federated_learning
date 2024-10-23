@@ -1,0 +1,4 @@
+- env variables
+- output dim
+- batch_size etc.
+- supervised mode, find avg reconstruction loss of model
