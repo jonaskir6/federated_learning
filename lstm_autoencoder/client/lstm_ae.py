@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 class Encoder(nn.Module):
-    def __init__(self, seq_len, n_features, embedding_dim=64):
+    def __init__(self, seq_len, n_features, embedding_dim=128):
         super(Encoder, self).__init__()
 
         self.seq_len, self.n_features = seq_len, n_features
@@ -17,7 +17,8 @@ class Encoder(nn.Module):
         self.lstm2 = nn.LSTM(
           input_size=self.hidden_dim,
           hidden_size=embedding_dim,
-          num_layers=1,
+          num_layers=2,
+          dropout=0.5,
           batch_first=True
         )
 
@@ -30,7 +31,7 @@ class Encoder(nn.Module):
         return x
 
 class Decoder(nn.Module):
-    def __init__(self, seq_len, input_dim=64, output_dim=1):
+    def __init__(self, seq_len, input_dim=128, output_dim=1):
         super(Decoder, self).__init__()
 
         self.seq_len, self.input_dim = seq_len, input_dim
@@ -39,7 +40,8 @@ class Decoder(nn.Module):
         self.lstm1 = nn.LSTM(
           input_size=input_dim,
           hidden_size=input_dim,
-          num_layers=1,
+          num_layers=2,
+          dropout=0.5,
           batch_first=True
         )
 
@@ -61,18 +63,19 @@ class Decoder(nn.Module):
         return self.dense_layers(x)
     
 class LSTMAutoencoder(nn.Module):
-    def __init__(self, device, seq_len, n_features, embedding_dim=64):
+    def __init__(self, device, seq_len, n_features, embedding_dim=128, output_dim=1):
         super(LSTMAutoencoder, self).__init__()
 
         self.seq_len, self.n_features = seq_len, n_features
         self.embedding_dim = embedding_dim
 
         self.encoder = Encoder(seq_len, n_features, embedding_dim).to(device)
-        self.decoder = Decoder(seq_len, embedding_dim, n_features).to(device)
+        self.decoder = Decoder(seq_len, embedding_dim, output_dim).to(device)
 
     def forward(self, x):
         x = self.encoder(x)
         x = self.decoder(x)
-        #print('LSTMAE: ', x.shape)
+        x = x.unsqueeze(-1)
+        # print('LSTMAE: ', x.shape)
 
         return x
