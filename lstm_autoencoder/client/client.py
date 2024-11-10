@@ -6,49 +6,80 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader, TensorDataset
 import flwr as fl
 from typing import OrderedDict
-import sys
+import os
 import lstm_ae, training
 
-# How do I get the data? env variable from docker compose?
-dataframe = pd.read_csv('fl_data.csv', delimiter=';')
-df = dataframe[['counter', 'dms1']]
+# TODO input from console in script before running client and server for test, change index averaging, fix fluctuation and input data 
+
+# Read env variables
+# data_path = os.getenv('DATA_FILE')
+# data_sensor = os.getenv('DATA_SENSOR')
+# supervised_mode = os.getenv('SUPERVISED_MODE')
+# target_rec_loss = float(os.getenv('TARGET_REC_LOSS'))
+# seq_size = int(os.getenv('SEQ_SIZE'))
+
+# Hardcoded for now
+# data_path = input('Data Path:')
+# data_sensor = input('Data Sensor:')
+# supervised_mode = bool(input('Supervised Mode(True/False):'))
+# seq_size = int(input('Sequence Size:'))
+# offset = int(input('Prediction Offset:'))
+
+data_path = 'fl_data.csv'
+data_sensor = 'dms1'
+supervised_mode = True
+threshhold = 0
+seq_size = 500
+offset = 100
+
+dataframe = pd.read_csv(data_path, delimiter=';')
+df = dataframe[['counter', data_sensor]]
 
 df = df.groupby(df.index // 10).agg({
     'counter': 'first',
-    'dms1': 'mean',
+    data_sensor: 'mean',
 }).reset_index(drop=True)
 
-sns.lineplot(x=df['counter'], y=df['dms1'])
+df = df.iloc[1800:-1200]
+
+sns.lineplot(x=df['counter'], y=df[data_sensor]) 
 
 print("Start: ", df['counter'].min())
 print("End: ", df['counter'].max())
 
-train, test = df.loc[df['counter'] <= 140000], df.loc[df['counter'] > 140000]
+print(f"Shape of df after slicing: {df.shape}")
 
-print(train.shape)
+# approx 80/20 split
+train, test = df.loc[df['counter'] <= 178000], df.loc[df['counter'] > 178000]
+
+# print(train.shape)
 
 scaler = StandardScaler()
-scaler = scaler.fit(train[['dms1']])
+scaler = scaler.fit(train[[data_sensor]])
 
-train[['dms1']] = scaler.transform(train[['dms1']])
-test[['dms1']] = scaler.transform(test[['dms1']])
+train[[data_sensor]] = scaler.transform(train[[data_sensor]])
+test[[data_sensor]] = scaler.transform(test[[data_sensor]])
 
-seq_size=500
-
-def to_sequences(x, y, seq_size=1):
+def to_sequences(x, seq_size=1):
     x_values = []
     y_values = []
 
-    for i in range(len(x)-seq_size):
-        x_values.append(x.iloc[i:(i+seq_size)].values)
-        y_values.append(y.iloc[i+seq_size])
+    for i in range(len(x) - seq_size - offset):
+        x_values.append(x.iloc[i:(i + seq_size)].values)
+        y_values.append(x.iloc[i + offset:(i + offset + seq_size)].values)
         
     return np.array(x_values), np.array(y_values)
 
 # shape: (samples, seq_size, n_features)
-trainX, trainY = to_sequences(train[['dms1']], train['dms1'], seq_size)
+trainX, trainY = to_sequences(train[[data_sensor]], seq_size)
 # shape: (samples, n_features)
-testX, testY = to_sequences(test[['dms1']], test['dms1'], seq_size)
+testX, testY = to_sequences(test[[data_sensor]], seq_size)
+
+num_train_sequences = len(train) - seq_size
+num_test_sequences = len(test) - seq_size
+
+print(f"Number of train sequences: {num_train_sequences}")
+print(f"Number of test sequences: {num_test_sequences}")
 
 # print(trainX.shape)
 # print(trainY.shape)
@@ -65,15 +96,7 @@ train_dl = DataLoader(train_dataset, batch_size=32, shuffle=False)
 test_dl = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = lstm_ae.LSTMAutoencoder(device, seq_len=trainX.shape[1], n_features=trainX.shape[2]).to(device)
-
-# train.train(model, train_dl, device)
-
-# sorted_anomalies = train.detect_anomalies_without_threshold(model, test_dl, device)
-# print(f'Number of anomalies detected: {len(sorted_anomalies)}')
-# for i, (anomaly, score) in enumerate(sorted_anomalies):
-#     print(f'Anomaly {i+1}: Score = {score}')
-
+model = lstm_ae.LSTMAutoencoder(device, seq_len=trainX.shape[1], n_features=trainX.shape[2], output_dim=seq_size).to(device)
 
 
 #########
@@ -94,9 +117,12 @@ class FlowerClient(fl.client.NumPyClient):
     
     def evaluate(self, parameters, config):
         self.set_parameters(parameters)
-        anomalies = training.detect_anomalies(model, test_dl, device, return_num_anomalies=True)
+        value = training.detect(model, test_dl, device, supervised_mode=supervised_mode)
         # what is going to be returned? what is the format/score?
-        return float(anomalies), len(testX), {"accuracy:": 0.0}
+        if supervised_mode:
+            return float(value), len(testX), {"Threshold:": value} 
+        else:  
+            return float(value), len(testX), {"Number of anomalies:": value}
 
 # start flower client
 fl.client.start_client(

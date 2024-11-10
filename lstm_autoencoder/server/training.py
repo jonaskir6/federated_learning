@@ -1,31 +1,31 @@
-import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from torch.utils.data import DataLoader, TensorDataset
-import lstm_ae
+import seaborn as sns
+import os
+import numpy as np
 
+factor = int(os.getenv('FACTOR'))
 
-def train(device, model, train_dl, n_epochs=10):
+threshold = 0
+factor = 3
+
+def train(device, model, train_dl, n_epochs=2):
 
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-5)
     epoch_losses = []
 
     for epoch in range(n_epochs):
         model.train()
         train_loss = 0.0
-        for batch_X, batch_Y in train_dl:
-            batch_X = batch_X.to(device)
-            batch_Y = batch_Y.to(device)
+        for X, Y in train_dl:
+            X, Y = X.to(device), Y.to(device)
 
             optimizer.zero_grad()
-            output = model(batch_X)
-            loss = criterion(output, batch_Y)
+            output = model(X)
+            loss = criterion(output, Y)
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
@@ -46,41 +46,60 @@ def train(device, model, train_dl, n_epochs=10):
     plt.show()
 
 
-# save table with anomalies in csv? or show as plot?
-def detect_anomalies_without_threshold(model, test_dl, device, return_num_anomalies=False):
+def detect(model, test_dl, device, supervised_mode=False):
     model.eval()
     criterion = nn.MSELoss()
-    anomalies = []
-    scores = []
     reconstruction_errors = []
+    actual_data = []
+    pred_data = []
 
     with torch.no_grad():
-        for batch_X, batch_Y in test_dl:
-            batch_X = batch_X.to(device)
-            batch_Y = batch_Y.to(device)
+        for x, y in test_dl:
+            x = x.to(device)
+            y = y.to(device)
 
-            output = model(batch_X)
-            loss = criterion(output, batch_Y)
+            output = model(x)
+            loss = criterion(output, y)
             reconstruction_error = loss.item()
             reconstruction_errors.append(reconstruction_error)
 
-            anomalies.append((batch_X.cpu().numpy(), output.cpu().numpy(), reconstruction_error))
+            actual_data.extend(y[:, -100:].cpu().numpy().flatten())
+            pred_data.extend(output[:, -100:].cpu().numpy().flatten())
 
-    # normalize based on the max reconstruction error (0-100)
-    max_error = max(reconstruction_errors)
-    for error in reconstruction_errors:
-        score = (error / max_error) * 100 
-        scores.append(score)
 
-    # sort by reconstruction error (desc)
-    sorted_anomalies = sorted(zip(anomalies, scores), key=lambda x: x[1], reverse=True)
+    actual_data = np.array(actual_data)
+    pred_data = np.array(pred_data)
+    counter = np.arange(1, len(actual_data) + 1)
 
-    # for federated learning
-    if return_num_anomalies:
-        # maybe look where the biggest gap is?
-        sorted_anomalies = [anomaly for anomaly, score in sorted_anomalies if score > 25]
-        return len(sorted_anomalies)
-    
+    plt.figure(figsize=(14, 7))
+    sns.lineplot(x=counter, y=actual_data, color='blue', label='Actual Data')
+    sns.lineplot(x=counter, y=pred_data, color='red', label='Predicted Data', alpha=0.6)
+    plt.xlabel('Counter')
+    plt.ylabel('Value')
+    plt.title('Actual vs Predicted Data Points')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    plt.figure(figsize=(14, 7))
+    sns.lineplot(x=counter[:5000], y=actual_data[:5000], color='blue', label='Actual Data')
+    sns.lineplot(x=counter[:5000], y=pred_data[:5000], color='red', label='Predicted Data')
+    plt.xlabel('Counter')
+    plt.ylabel('Value')
+    plt.title('Actual vs Predicted Data Points')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+
+    if supervised_mode:
+        mean_error = np.mean(reconstruction_errors)
+        std_error = np.std(reconstruction_errors)
+        os.environ['threshold'] = str(mean_error + factor * std_error)
+        return mean_error + factor * std_error
     else:
-        return sorted_anomalies
-
+        anomalies = []
+        for err in reconstruction_errors:
+            if err > threshold:
+                anomalies.append(err)
+        return len(anomalies)
