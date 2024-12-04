@@ -11,7 +11,7 @@ factor = int(os.getenv('FACTOR'))
 threshold = 0
 factor = 3
 
-def train(device, model, train_dl, n_epochs=2):
+def train(device, model, train_dl, n_epochs=40):
 
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-5)
@@ -29,8 +29,8 @@ def train(device, model, train_dl, n_epochs=2):
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
-        train_loss /= len(train_dl) 
-        epoch_losses.append(train_loss) 
+        train_loss /= len(train_dl)
+        epoch_losses.append(train_loss)
         print(f'Epoch {epoch+1}, Loss: {train_loss}')
 
     # training loss
@@ -57,46 +57,62 @@ def detect(model, test_dl, device, supervised_mode=False):
         for x, y in test_dl:
             x = x.to(device)
             y = y.to(device)
-
             output = model(x)
+            # print("out: ", output.shape)
+            # print("y: ", y.shape)
             loss = criterion(output, y)
             reconstruction_error = loss.item()
             reconstruction_errors.append(reconstruction_error)
 
-            actual_data.extend(y[:, -100:].cpu().numpy().flatten())
-            pred_data.extend(output[:, -100:].cpu().numpy().flatten())
+            actual_data.append(y.cpu().numpy())
+            pred_data.append(output.cpu().numpy())
 
+    actual_data = np.concatenate(actual_data, axis=0)
+    pred_data = np.concatenate(pred_data, axis=0)
+    counter = np.arange(1, actual_data.shape[0] + 1)
 
-    actual_data = np.array(actual_data)
-    pred_data = np.array(pred_data)
-    counter = np.arange(1, len(actual_data) + 1)
+    # print("ad: ", actual_data.shape)
+    # print("pd: ", pred_data.shape)
+
+    actual_data = actual_data[-50:]
+    pred_data = pred_data[-50:]
+
+    x = np.arange(1, len(reconstruction_errors) + 1)
+
+    plt.hist(reconstruction_errors, bins=50, color='blue')
 
     plt.figure(figsize=(14, 7))
-    sns.lineplot(x=counter, y=actual_data, color='blue', label='Actual Data')
-    sns.lineplot(x=counter, y=pred_data, color='red', label='Predicted Data', alpha=0.6)
-    plt.xlabel('Counter')
-    plt.ylabel('Value')
-    plt.title('Actual vs Predicted Data Points')
+    sns.lineplot(x=x, y=reconstruction_errors, color='blue', label=f'Reconstruction Error')
+    plt.xlabel('Sequence')
+    plt.ylabel('Reconstruction Error')
+    plt.title(f'Reconstruction Error')
     plt.legend()
     plt.grid(True)
     plt.show()
 
-    plt.figure(figsize=(14, 7))
-    sns.lineplot(x=counter[:5000], y=actual_data[:5000], color='blue', label='Actual Data')
-    sns.lineplot(x=counter[:5000], y=pred_data[:5000], color='red', label='Predicted Data')
-    plt.xlabel('Counter')
-    plt.ylabel('Value')
-    plt.title('Actual vs Predicted Data Points')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+    # seq along the time axis
+    actual_data_concat = actual_data.reshape(-1, actual_data.shape[2])
+    pred_data_concat = pred_data.reshape(-1, pred_data.shape[2])
 
+    counter = np.arange(actual_data_concat.shape[0])
 
+    for feature in range(actual_data.shape[2]):
+        plt.figure(figsize=(15, 6))
+        plt.plot(counter, actual_data_concat[:, feature], color='green', alpha=1)
+        plt.plot(counter, pred_data_concat[:, feature], color='red', alpha=0.6)
+        plt.title(f'Feature {feature + 1} - All Sequences')
+        plt.xlabel('Time step')
+        plt.ylabel('Value')
+        plt.legend(['Actual', 'Predicted'], loc='upper right')
+        plt.show()
+
+    # threshold = upper bound for 90% confidence interval
     if supervised_mode:
         mean_error = np.mean(reconstruction_errors)
         std_error = np.std(reconstruction_errors)
-        os.environ['threshold'] = str(mean_error + factor * std_error)
-        return mean_error + factor * std_error
+        upper_bound = mean_error + 1.645 * std_error
+        os.environ['threshold'] = str(upper_bound)
+        return upper_bound
     else:
         anomalies = []
         for err in reconstruction_errors:

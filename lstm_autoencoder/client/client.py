@@ -29,20 +29,23 @@ data_path = 'fl_data.csv'
 data_sensor = 'dms1'
 supervised_mode = True
 threshhold = 0
-seq_size = 500
-offset = 100
+seq_size = 100
+offset = 10
+sensors = 4
 
 dataframe = pd.read_csv(data_path, delimiter=';')
-df = dataframe[['counter', data_sensor]]
+df = dataframe[['counter', 'dms1', 'dms2', 'dms3', 'dms4']]
 
 df = df.groupby(df.index // 10).agg({
     'counter': 'first',
-    data_sensor: 'mean',
+    'dms1': 'mean',
+    'dms2': 'mean',
+    'dms3': 'mean',
+    'dms4': 'mean'
 }).reset_index(drop=True)
 
 df = df.iloc[1800:-1200]
 
-sns.lineplot(x=df['counter'], y=df[data_sensor]) 
 
 print("Start: ", df['counter'].min())
 print("End: ", df['counter'].max())
@@ -50,36 +53,58 @@ print("End: ", df['counter'].max())
 print(f"Shape of df after slicing: {df.shape}")
 
 # approx 80/20 split
-train, test = df.loc[df['counter'] <= 178000], df.loc[df['counter'] > 178000]
+train_test_ratio = 0.8
+breakpoint = int(len(df) * train_test_ratio)
+train, test = df.iloc[:breakpoint], df.iloc[breakpoint:]
 
-# print(train.shape)
+print(train.shape)
 
 scaler = StandardScaler()
-scaler = scaler.fit(train[[data_sensor]])
+dms_sensors = [f"dms{i}" for i in range(1, sensors + 1)]
+scaler = scaler.fit(train[dms_sensors])
 
-train[[data_sensor]] = scaler.transform(train[[data_sensor]])
-test[[data_sensor]] = scaler.transform(test[[data_sensor]])
+train[dms_sensors] = scaler.transform(train[dms_sensors])
+test[dms_sensors] = scaler.transform(test[dms_sensors])
 
 def to_sequences(x, seq_size=1):
     x_values = []
     y_values = []
+    print('lenx: ', len(x))
 
     for i in range(len(x) - seq_size - offset):
         x_values.append(x.iloc[i:(i + seq_size)].values)
         y_values.append(x.iloc[i + offset:(i + offset + seq_size)].values)
-        
     return np.array(x_values), np.array(y_values)
-
-# shape: (samples, seq_size, n_features)
-trainX, trainY = to_sequences(train[[data_sensor]], seq_size)
-# shape: (samples, n_features)
-testX, testY = to_sequences(test[[data_sensor]], seq_size)
 
 num_train_sequences = len(train) - seq_size
 num_test_sequences = len(test) - seq_size
 
+# shape: (samples, seq_size, n_features)
+# shape: (samples, seq_size, n_features)
+trainX, trainY = [], []
+testX, testY = [], []
+
+for sensor in dms_sensors:
+    trainX_tmp, trainY_tmp = to_sequences(train[sensor], seq_size)
+    testX_tmp, testY_tmp = to_sequences(test[sensor], seq_size)
+    trainX.append(trainX_tmp)
+    trainY.append(trainY_tmp)
+    testX.append(testX_tmp)
+    testY.append(testY_tmp)
+
+trainX = np.concatenate(trainX, axis=0).reshape(-1, seq_size, sensors)
+trainY = np.concatenate(trainY, axis=0).reshape(-1, seq_size, sensors)
+testX = np.concatenate(testX, axis=0).reshape(-1, seq_size, sensors)
+testY = np.concatenate(testY, axis=0).reshape(-1, seq_size, sensors)
+
+print('trainX shape:', trainX.shape)
+print('trainY shape:', trainY.shape)
+print('testX shape:', testX.shape)
+print('testY shape:', testY.shape)
+
 print(f"Number of train sequences: {num_train_sequences}")
 print(f"Number of test sequences: {num_test_sequences}")
+
 
 # print(trainX.shape)
 # print(trainY.shape)
@@ -88,6 +113,12 @@ trainX = torch.tensor(trainX, dtype=torch.float32)
 trainY = torch.tensor(trainY, dtype=torch.float32)
 testX = torch.tensor(testX, dtype=torch.float32)
 testY = torch.tensor(testY, dtype=torch.float32)
+
+train_dataset = TensorDataset(trainX, trainY)
+test_dataset = TensorDataset(testX, testY)
+
+train_dl = DataLoader(train_dataset, batch_size=32, shuffle=False)
+test_dl = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
 train_dataset = TensorDataset(trainX, trainY)
 test_dataset = TensorDataset(testX, testY)
