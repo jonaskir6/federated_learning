@@ -11,7 +11,7 @@ factor = int(os.getenv('FACTOR'))
 threshold = 0
 factor = 3
 
-def train(device, model, train_dl, n_epochs=40):
+def train(device, model, train_dl, n_epochs=5):
 
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-5)

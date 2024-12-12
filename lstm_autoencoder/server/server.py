@@ -12,7 +12,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 n_features = 4
 seq_size = 100
 ### Change to env ###
-model = lstm_ae.LSTMAutoencoder(device, seq_len=seq_size, n_features=n_features, output_dim=seq_size)
+model = lstm_ae.LSTMAutoencoder(device, seq_len=seq_size, n_features=n_features)
 
 class SaveModelStrategy(fl.server.strategy.FedAvg):
     def aggregate_fit(

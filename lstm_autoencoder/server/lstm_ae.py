@@ -57,7 +57,7 @@ class Decoder(nn.Module):
         return x
 
 class LSTMAutoencoder(nn.Module):
-    def __init__(self, device, seq_len, n_features, embedding_dim=256):
+    def __init__(self, device, seq_len, n_features, embedding_dim=128):
         super(LSTMAutoencoder, self).__init__()
 
         self.seq_len, self.n_features = seq_len, n_features

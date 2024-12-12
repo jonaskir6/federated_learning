@@ -26,7 +26,7 @@ import lstm_ae, training
 # offset = int(input('Prediction Offset:'))
 
 data_path = 'fl_data.csv'
-data_sensor = 'dms1'
+# data_sensor = 'dms1'
 supervised_mode = True
 threshhold = 0
 seq_size = 100
@@ -127,7 +127,7 @@ train_dl = DataLoader(train_dataset, batch_size=32, shuffle=False)
 test_dl = DataLoader(test_dataset, batch_size=32, shuffle=False)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = lstm_ae.LSTMAutoencoder(device, seq_len=trainX.shape[1], n_features=trainX.shape[2], output_dim=seq_size).to(device)
+model = lstm_ae.LSTMAutoencoder(device, seq_len=trainX.shape[1], n_features=trainX.shape[2]).to(device)
 
 
 #########
