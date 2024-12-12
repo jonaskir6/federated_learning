@@ -24,7 +24,7 @@ docker-compose up -d
 - You can find the samples in the client and server folders
 - Your final aggregated model will be called model_round{num_epochs}.pth
 
-## LSTM-Autoencoder
+## LSTM-Autoencoder for Time Series Data
 ### Custom Settings (missing)
 
 ### Running the Project
