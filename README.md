@@ -40,5 +40,5 @@ Navigate to the `lstm_autoencoder` folder and execute the following command to s
 docker-compose up -d
 ```
 
-- You can find the samples in `lstm_autoencoder/server/models`
+- You can find the final models in `lstm_autoencoder/server/models`
 - Your final aggregated model will be called model_round{num_epochs}.pth
