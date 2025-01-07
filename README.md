@@ -4,6 +4,7 @@
 
 - nvidia toolkit
 - docker with nvidia runtime
+- python
 
 
 ## MADE
@@ -24,7 +25,7 @@ docker-compose up -d
 - You can find the samples in the client and server folders
 - Your final aggregated model will be called model_round{num_epochs}.pth
 
-## LSTM-Autoencoder
+## LSTM-Autoencoder for Time Series Data
 ### Custom Settings (missing)
 
 ### Running the Project
@@ -33,7 +34,7 @@ For example vaulues and data look at the example lstm_ae.ipynb
 
 Add your data to the `lstm_autoencoder/client/data` folder (right now it will train all on the same data, custom data for each container feature missing)
 
-Navigate to the `fedavg_made` folder and execute the following command to start the services:
+Navigate to the `lstm_autoencoder` folder and execute the following command to start the services:
 
 ```sh
 docker-compose up -d
