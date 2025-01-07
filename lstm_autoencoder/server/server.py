@@ -1,16 +1,18 @@
 from typing import List, OrderedDict
 import flwr as fl
-import sys
 import numpy as np
 import torch
 import lstm_ae
 import os
+import training
 
 # need seq_len and n_features
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 ### Change to env ###
 n_features = 4
 seq_size = 100
+offset=10
 ### Change to env ###
 model = lstm_ae.LSTMAutoencoder(device, seq_len=seq_size, n_features=n_features)
 
@@ -39,11 +41,12 @@ class SaveModelStrategy(fl.server.strategy.FedAvg):
         return aggregated_parameters, aggregated_metrics
     
 
+
 strategy = SaveModelStrategy()
 
 fl.server.start_server(
     server_address = 'server:5002',
-    config = fl.server.ServerConfig(num_rounds=3),
+    config = fl.server.ServerConfig(num_rounds=5),
     strategy = strategy,
     grpc_max_message_length=2 * 1024 * 1024 *1024 -1
 )

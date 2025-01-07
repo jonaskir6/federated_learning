@@ -6,12 +6,12 @@ import seaborn as sns
 import os
 import numpy as np
 
-factor = int(os.getenv('FACTOR'))
+# factor = int(os.getenv('FACTOR'))
 
 threshold = 0
 factor = 3
 
-def train(device, model, train_dl, n_epochs=5):
+def train(device, model, train_dl, n_epochs=10):
 
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=0.0001, weight_decay=1e-5)
@@ -45,6 +45,26 @@ def train(device, model, train_dl, n_epochs=5):
     plt.grid(True)
     plt.show()
 
+
+def evaluate(model, test_dl, device):
+    model.eval()
+    criterion = nn.MSELoss()
+    reconstruction_errors = []
+    actual_data = []
+    pred_data = []
+
+    with torch.no_grad():
+        for x, y in test_dl:
+            x = x.to(device)
+            y = y.to(device)
+            output = model(x)
+            # print("out: ", output.shape)
+            # print("y: ", y.shape)
+            loss = criterion(output, y)
+            reconstruction_error = loss.item()
+            reconstruction_errors.append(reconstruction_error)
+
+    return np.mean(reconstruction_errors)
 
 def detect(model, test_dl, device, supervised_mode=False):
     model.eval()
