@@ -148,12 +148,15 @@ class FlowerClient(fl.client.NumPyClient):
     
     def evaluate(self, parameters, config):
         self.set_parameters(parameters)
-        value = training.detect(model, test_dl, device, supervised_mode=supervised_mode)
-        # what is going to be returned? what is the format/score?
-        if supervised_mode:
-            return float(value), len(testX), {"Threshold:": value} 
-        else:  
-            return float(value), len(testX), {"Number of anomalies:": value}
+        loss = training.evaluate(model, test_dl, device)
+        return float(loss), len(testX), {"Loss": loss}
+    
+        # evaluate threshold instead of loss:
+        # value = training.detect(model, test_dl, device, supervised_mode=supervised_mode)
+        # if supervised_mode:
+        #     return float(value), len(testX), {"Threshold:": value} 
+        # else:  
+        #     return float(value), len(testX), {"Number of anomalies:": value}
 
 # start flower client
 fl.client.start_client(
