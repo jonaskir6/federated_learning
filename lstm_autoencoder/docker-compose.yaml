@@ -4,7 +4,7 @@ services:
       context: ./server
       dockerfile: Dockerfile
     ports:
-      - "5004:5004"
+      - "5002:5002"
     volumes:
       - ./server:/app
 
@@ -14,7 +14,7 @@ services:
       context: ./client
       dockerfile: Dockerfile
     ports:
-      - "5003:5003"
+      - "5001:5001"
     volumes:
       - ./d_data/client_one:/app/data
     runtime: nvidia
@@ -31,9 +31,9 @@ services:
   client_two:
     build:
       context: ./client
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile2
     ports:
-      - "5002:5002"
+      - "5003:5003"
     volumes:
       - ./d_data/client_two:/app/data
     runtime: nvidia 
@@ -46,3 +46,60 @@ services:
               capabilities: [gpu]
     depends_on:
       - server
+
+  # client_three:
+  #   build:
+  #     context: ./client
+  #     dockerfile: Dockerfile3
+  #   ports:
+  #     - "5004:5004"
+  #   volumes:
+  #     - ./d_data/client_three:/app/data
+  #   runtime: nvidia 
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+  #   depends_on:
+  #     - server
+
+  # client_four:
+  #   build:
+  #     context: ./client
+  #     dockerfile: Dockerfile4
+  #   ports:
+  #     - "5005:5005"
+  #   volumes:
+  #     - ./d_data/client_four:/app/data
+  #   runtime: nvidia 
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+  #   depends_on:
+  #     - server
+
+  # client_five:
+  #   build:
+  #     context: ./client
+  #     dockerfile: Dockerfile5
+  #   ports:
+  #     - "5006:5006"
+  #   volumes:
+  #     - ./d_data/client_five:/app/data
+  #   runtime: nvidia 
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+  #   depends_on:
+  #     - server
