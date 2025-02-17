@@ -7,7 +7,7 @@ RUN pip3 install flwr torch torchvision numpy matplotlib pandas seaborn scikit-l
 COPY client.py /app/client.py
 COPY lstm_ae.py /app/lstm_ae.py
 COPY training.py /app/training.py
-COPY data/client1/fl_data.csv /app/fl_data.csv
+COPY data/client_2/fl_data.csv /app/fl_data.csv
 
 WORKDIR /app
 

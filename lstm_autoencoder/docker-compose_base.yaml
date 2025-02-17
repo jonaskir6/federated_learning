@@ -12,7 +12,7 @@ services:
   client_one:
     build:
       context: ./client
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile_1
     ports:
       - "5001:5001"
     volumes:
@@ -31,7 +31,7 @@ services:
   client_two:
     build:
       context: ./client
-      dockerfile: Dockerfile2
+      dockerfile: Dockerfile_2
     ports:
       - "5003:5003"
     volumes:
@@ -50,7 +50,7 @@ services:
   # client_three:
   #   build:
   #     context: ./client
-  #     dockerfile: Dockerfile3
+  #     dockerfile: Dockerfile_3
   #   ports:
   #     - "5004:5004"
   #   volumes:
@@ -69,7 +69,7 @@ services:
   # client_four:
   #   build:
   #     context: ./client
-  #     dockerfile: Dockerfile4
+  #     dockerfile: Dockerfile_4
   #   ports:
   #     - "5005:5005"
   #   volumes:
@@ -88,7 +88,7 @@ services:
   # client_five:
   #   build:
   #     context: ./client
-  #     dockerfile: Dockerfile5
+  #     dockerfile: Dockerfile_5
   #   ports:
   #     - "5006:5006"
   #   volumes:
