@@ -1,0 +1,86 @@
+version: '3.8'
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    ports:
+    - 5002:5002
+    volumes:
+    - ./server:/app
+  client_1:
+    build:
+      context: ./client
+      dockerfile: Dockerfile_1
+    ports:
+    - 5003:5003
+    volumes:
+    - ./d_data/client_1:/app/data
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: 1
+            capabilities:
+            - gpu
+    depends_on:
+    - server
+  client_2:
+    build:
+      context: ./client
+      dockerfile: Dockerfile_2
+    ports:
+    - 5004:5004
+    volumes:
+    - ./d_data/client_2:/app/data
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: 1
+            capabilities:
+            - gpu
+    depends_on:
+    - server
+  client_3:
+    build:
+      context: ./client
+      dockerfile: Dockerfile_3
+    ports:
+    - 5005:5005
+    volumes:
+    - ./d_data/client_3:/app/data
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: 1
+            capabilities:
+            - gpu
+    depends_on:
+    - server
+  client_4:
+    build:
+      context: ./client
+      dockerfile: Dockerfile_4
+    ports:
+    - 5006:5006
+    volumes:
+    - ./d_data/client_4:/app/data
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+          - driver: nvidia
+            count: 1
+            capabilities:
+            - gpu
+    depends_on:
+    - server
