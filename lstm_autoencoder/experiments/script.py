@@ -121,6 +121,11 @@ def run_experiment(num_clients, output_dir):
         if "server" in line.split()[1]:
             server_id = line.split()[0]
             break
+    
+    print(f"Info: Server container ID: {server_id}")
+    print(f"Info: Running experiments...")
+    subprocess.run(["sudo", "docker", "wait", server_id], check=True)
+
 
     # copy model
     model_path = "/app/models/model_round_10.pth"

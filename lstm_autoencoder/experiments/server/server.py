@@ -10,7 +10,7 @@ import training
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 ### Change to env ###
-n_features = 4
+n_features = 8
 seq_size = 100
 offset=10
 ### Change to env ###

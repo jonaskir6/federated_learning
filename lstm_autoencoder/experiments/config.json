@@ -1,5 +1,5 @@
 {
-    "max_clients": 4,
+    "max_clients": 2,
     "source_path": "all_data",
     "run_local": true
 }

@@ -38,17 +38,17 @@ df = df.groupby(df.index // 10).agg({
 # df = df.iloc[1800:-1200]
 
 
-print("Start: ", df['counter'].min())
-print("End: ", df['counter'].max())
+# print("Start: ", df['counter'].min())
+# print("End: ", df['counter'].max())
 
-print(f"Shape of df after slicing: {df.shape}")
+# print(f"Shape of df after slicing: {df.shape}")
 
 # approx 80/20 split
 train_test_ratio = 0.8
 breakpoint = int(len(df) * train_test_ratio)
 train, test = df.iloc[:breakpoint], df.iloc[breakpoint:]
 
-print(train.shape)
+# print(train.shape)
 
 scaler = StandardScaler()
 dms_sensors = [f"dms{i}" for i in range(1, sensors + 1)]
@@ -60,7 +60,7 @@ test[dms_sensors] = scaler.transform(test[dms_sensors])
 def to_sequences(x, seq_size=1):
     x_values = []
     y_values = []
-    print('lenx: ', len(x))
+    # print('lenx: ', len(x))
 
     for i in range(len(x) - seq_size - offset):
         x_values.append(x.iloc[i:(i + seq_size)].values)
@@ -88,13 +88,13 @@ trainY = np.concatenate(trainY, axis=0).reshape(-1, seq_size, sensors)
 testX = np.concatenate(testX, axis=0).reshape(-1, seq_size, sensors)
 testY = np.concatenate(testY, axis=0).reshape(-1, seq_size, sensors)
 
-print('trainX shape:', trainX.shape)
-print('trainY shape:', trainY.shape)
-print('testX shape:', testX.shape)
-print('testY shape:', testY.shape)
+# print('trainX shape:', trainX.shape)
+# print('trainY shape:', trainY.shape)
+# print('testX shape:', testX.shape)
+# print('testY shape:', testY.shape)
 
-print(f"Number of train sequences: {num_train_sequences}")
-print(f"Number of test sequences: {num_test_sequences}")
+# print(f"Number of train sequences: {num_train_sequences}")
+# print(f"Number of test sequences: {num_test_sequences}")
 
 
 # print(trainX.shape)
@@ -204,7 +204,7 @@ def train(device, model, train_dl, n_epochs=100):
             train_loss += loss.item()
         train_loss /= len(train_dl)
         epoch_losses.append(train_loss)
-        print(f'Epoch {epoch+1}, Loss: {train_loss}')
+        # print(f'Epoch {epoch+1}, Loss: {train_loss}')
 
     # training loss
     epochs = range(1, n_epochs + 1)
