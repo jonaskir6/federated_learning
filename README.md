@@ -4,6 +4,7 @@ Using LSTM-Autoencoders and Federated Learning to train models on industry time 
 
 ## Requirements
 
+- run on linux
 - nvidia toolkit
 - docker with nvidia runtime
 - python3
