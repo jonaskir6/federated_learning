@@ -1,44 +1,26 @@
-# Federated Learning with MADE and LSTM-Autoencoders
+# Federated Learning Experiments for the Fraunhofer CCIT Edge Cloud Project
+
+Using LSTM-Autoencoders and Federated Learning to train models on industry time series data
 
 ## Requirements
 
 - nvidia toolkit
 - docker with nvidia runtime
-- python
-
-
-## MADE
-### Custom Settings (missing)
-
-### Federated Learning Tests
-
-This project uses PyTorch and Flower to implement Federated Learning on the MNIST dataset, utilizing the Masked Autoencoder for Distribution Estimation (MADE) model. For more details, refer to the [original paper](https://arxiv.org/abs/1502.03509).
-
-### Running the Project
-
-Navigate to the `fedavg_made` folder and execute the following command to start the services:
-
-```sh
-docker-compose up -d
-```
-
-- You can find the samples in the client and server folders
-- Your final aggregated model will be called model_round{num_epochs}.pth
+- python3
 
 ## LSTM-Autoencoder for Time Series Data
-### Custom Settings (missing)
-
 ### Running the Project
 
-For example vaulues and data look at the example lstm_ae.ipynb
+For example vaulues and data look at the example at `lstm_autoencoder/base/lstm_ae.ipynb`
 
-Add your data to the `lstm_autoencoder/client/data` folder (right now it will train all on the same data, custom data for each container feature missing)
+Add your data folder to the `experiments` folder and folder and name the data files "client_x.csv" for all clients "x" you want to specify (Warning: Number of data files needs to be at least the number of clients)
 
-Navigate to the `lstm_autoencoder` folder and execute the following command to start the services:
+Specify your data source path and number of clients in the `lstm_autoencoder/experiments/config.json` file
+
+Navigate to the `lstm_autoencoder/experiments` folder and execute the following command to start the services:
 
 ```sh
-docker-compose up -d
+python3 script.py
 ```
 
-- You can find the final models in `lstm_autoencoder/server/models`
-- Your final aggregated model will be called model_round{num_epochs}.pth
+- You can find the final models in `lstm_autoencoder/experiments/results/models`
