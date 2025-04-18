@@ -9,20 +9,6 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 import os
 
-# Fragen: 
-# - n_features: Werden wir auch pro Modell mehrere Sensoren haben? Oder immer pro Modell einen Sensor => Implementationskomplexität
-
-# - env variables
-# - output dim
-# - batch_size etc.
-# - supervised mode, find avg reconstruction loss of model
-
-# Read env variables
-# data_path = os.getenv('DATA_FILE')
-# data_sensor = os.getenv('DATA_SENSOR')
-# supervised_mode = os.getenv('SUPERVISED_MODE')
-# target_rec_loss = float(os.getenv('TARGET_REC_LOSS'))
-# seq_size = int(os.getenv('SEQ_SIZE'))
 
 data_path = 'data/fl_data.csv'
 data_sensor = 'dms1'
@@ -226,45 +212,6 @@ def detect(model, test_dl, device, supervised_mode=False):
         return sum(reconstruction_errors) / len(reconstruction_errors)
     else:
         return max(reconstruction_errors) - target_rec_loss
-    
-
-# deprecated for now (function to calculate anomaly score based on reconstruction error)
-# def detect_anomalies(model, test_dl, device, return_num_anomalies=False):
-#     model.eval()
-#     criterion = nn.MSELoss()
-#     anomalies = []
-#     scores = []
-#     reconstruction_errors = []
-
-#     with torch.no_grad():
-#         for batch_X, batch_Y in test_dl:
-#             batch_X = batch_X.to(device)
-#             batch_Y = batch_Y.to(device)
-
-#             output = model(batch_X)
-#             loss = criterion(output, batch_Y)
-#             reconstruction_error = loss.item()
-#             reconstruction_errors.append(reconstruction_error)
-
-#             anomalies.append((batch_X.cpu().numpy(), output.cpu().numpy(), reconstruction_error))
-
-#     # normalize based on the max reconstruction error (0-100)
-#     max_error = max(reconstruction_errors)
-#     for error in reconstruction_errors:
-#         score = (error / max_error) * 100 
-#         scores.append(score)
-
-#     # sort by reconstruction error (desc)
-#     sorted_anomalies = sorted(zip(anomalies, scores), key=lambda x: x[1], reverse=True)
-
-#     # for federated learning
-#     if return_num_anomalies:
-#         # maybe look where the biggest gap is?
-#         sorted_anomalies = [anomaly for anomaly, score in sorted_anomalies if score > 25]
-#         return len(sorted_anomalies)
-    
-#     else:
-#         return sorted_anomalies
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = LSTMAutoencoder(device, seq_len=trainX.shape[1], n_features=trainX.shape[2], output_dim=seq_size).to(device)
