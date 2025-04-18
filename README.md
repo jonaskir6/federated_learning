@@ -8,6 +8,7 @@ Using LSTM-Autoencoders and Federated Learning to train models on industry time 
 - nvidia toolkit
 - docker with nvidia runtime
 - python3
+- python packages: numpy, torch, seaborn, pandas, matplotlib
 
 ## LSTM-Autoencoder for Time Series Data
 ### Running the Project
