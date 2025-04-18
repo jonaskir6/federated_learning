@@ -4,3 +4,5 @@
 /**/models
 /**/all_data
 /**/all_data_base
+/**/Dockerfile_*
+/**/docker-compose.yml

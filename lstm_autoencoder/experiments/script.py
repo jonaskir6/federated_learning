@@ -13,6 +13,7 @@ with open('config.json', 'r') as file:
 
 max_clients = config['max_clients']
 source_path = config['source_path']
+run_local = config['run_local']
 assert(max_clients < len([f for f in os.listdir(source_path) if os.path.isfile(os.path.join(source_path, f))])), "Not enough data for the maximum client number"
 
 
@@ -101,6 +102,7 @@ def generate_docker_compose(num_clients):
 def run_local():
     print("Info: Running local model...")
     local.run()
+    print("Info: Finished experiment on local model successfully")
 
 
 def run_experiment(num_clients, output_dir):
@@ -132,6 +134,9 @@ def run_experiment(num_clients, output_dir):
 
 prepare_data()
 generate_dockerfiles()
+
+if run_local:
+    run_local()
 
 for i in range(2, max_clients + 1):
     run_experiment(i, "results/models")
