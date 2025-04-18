@@ -18,7 +18,7 @@ Add your data folder to the `experiments` folder and folder and name the data fi
 
 Specify your data source path and number of clients in the `lstm_autoencoder/experiments/config.json` file
 
-Navigate to the `lstm_autoencoder/experiments` folder and execute the following command to start the services:
+Navigate to the `lstm_autoencoder/experiments` folder and execute the following command to start the experiments:
 
 ```sh
 python3 script.py
