@@ -1,4 +1,4 @@
-# Experiments for the Fraunhofer CCIT Edge Cloud Project
+# Experiments for the Fraunhofer CCIT Intelli-Edge Cloud Project
 
 Using LSTM-Autoencoders and Federated Learning to train models on industry time series data
 
